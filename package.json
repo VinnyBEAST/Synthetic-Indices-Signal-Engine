@@ -1,0 +1,19 @@
+{
+  "name": "capitalsignals-(d)",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "dayjs": "^1.11.18",
+    "node-notifier": "^10.0.1",
+    "technicalindicators": "^3.1.0",
+    "ws": "^8.18.3"
+  }
+}

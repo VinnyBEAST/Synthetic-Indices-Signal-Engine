@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SIGENG — Synthetic Signal Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --black:  #000000;
+  --bg1:    #0a0a0a;
+  --bg2:    #111111;
+  --amber:  #ff9900;
+  --amber2: #cc7700;
+  --amber3: #7a4a00;
+  --green:  #00ff41;
+  --red:    #ff3b30;
+  --cyan:   #00d4ff;
+  --white:  #e8e8e8;
+  --grey:   #444444;
+  --font:   'IBM Plex Mono', 'Courier New', monospace;
+}
+
+html,body{
+  background: var(--black);
+  color: var(--amber);
+  font-family: var(--font);
+  font-size: 12px;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* ── STATUS BAR ── */
+.statusbar{
+  background: var(--amber);
+  color: #000;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: .04em;
+}
+.statusbar-right{ display:flex; gap:16px; }
+
+/* ── TOP HEADER ── */
+.header{
+  background: var(--bg1);
+  border-bottom: 1px solid var(--amber3);
+  padding: 6px 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.header-title{
+  flex: 1;
+}
+.header-title .main-title{
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: .06em;
+}
+.header-title .sub-title{
+  font-size: 9px;
+  color: var(--amber3);
+  letter-spacing: .1em;
+  margin-top: 1px;
+}
+.header-price{
+  text-align: right;
+}
+.price-big{
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: .03em;
+  font-variant-numeric: tabular-nums;
+}
+.price-delta{
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.price-meta{
+  font-size: 9px;
+  color: var(--amber3);
+  text-align: right;
+  margin-top: 2px;
+  letter-spacing: .06em;
+}
+
+/* ── HORIZONTAL DIVIDER ── */
+.hline{
+  border: 0;
+  border-top: 1px solid var(--amber3);
+  margin: 0;
+}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{
+  background: var(--amber);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  padding: 2px 8px;
+}
+
+/* ── STAT ROW ── */
+.stat-row{
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  border-bottom: 1px solid var(--amber3);
+}
+.stat-cell{
+  padding: 6px 8px;
+  border-right: 1px solid var(--amber3);
+}
+.stat-cell:last-child{ border-right: 0; }
+.stat-lbl{
+  font-size: 8px;
+  color: var(--amber3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.stat-val{
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── TWO-COLUMN BODY ── */
+.body-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--amber3);
+  min-height: 160px;
+}
+.col-left{
+  border-right: 1px solid var(--amber3);
+  padding: 6px 8px;
+}
+.col-right{
+  padding: 6px 8px;
+}
+
+/* ── FILTER TABLE ── */
+.filter-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.filter-table tr{
+  border-bottom: 1px solid var(--amber3);
+}
+.filter-table tr:last-child{ border-bottom: 0; }
+.filter-table td{
+  padding: 4px 4px;
+  vertical-align: middle;
+}
+.filter-table .f-lbl{
+  color: var(--amber3);
+  font-size: 9px;
+  width: 45%;
+  letter-spacing: .04em;
+}
+.filter-table .f-val{
+  font-weight: 700;
+  font-size: 10px;
+  width: 20%;
+  text-align: right;
+}
+.filter-table .f-detail{
+  color: var(--amber2);
+  font-size: 8px;
+  padding-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+
+/* ── READINESS ── */
+.readiness-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.read-lbl{ font-size: 9px; color: var(--amber3); letter-spacing: .08em; width: 72px; flex-shrink: 0; }
+.read-bar-track{
+  flex: 1;
+  height: 8px;
+  background: #1a0f00;
+  border: 1px solid var(--amber3);
+  position: relative;
+}
+.read-bar-fill{
+  height: 100%;
+  transition: width .5s ease, background .4s;
+}
+.read-pct{ font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; width: 44px; text-align: right; flex-shrink: 0; }
+
+/* ── CHART ── */
+canvas#chart{
+  display: block;
+  width: 100%;
+  height: 120px;
+  border-bottom: 1px solid var(--amber3);
+}
+
+/* ── MODE TABS ── */
+.mode-tabs{
+  display: flex;
+  border-bottom: 1px solid var(--amber3);
+}
+.mode-tab{
+  flex: 1;
+  padding: 5px 0;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  cursor: pointer;
+  border: 0;
+  background: var(--black);
+  color: var(--amber3);
+  border-right: 1px solid var(--amber3);
+}
+.mode-tab:last-child{ border-right: 0; }
+.mode-tab.active{ background: var(--amber); color: #000; }
+
+/* ── SIGNAL BANNER ── */
+.sig-banner{
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  border-bottom: 1px solid var(--amber3);
+  min-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── LOG ── */
+.log-area{
+  height: 140px;
+  overflow-y: auto;
+  padding: 4px 8px;
+  background: var(--black);
+  font-size: 9.5px;
+  line-height: 1.55;
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber3) transparent;
+}
+.log-area::-webkit-scrollbar{ width: 4px; }
+.log-area::-webkit-scrollbar-thumb{ background: var(--amber3); }
+.ll{ color: var(--amber2); }
+.ll.g{ color: var(--green); }
+.ll.w{ color: var(--amber); }
+.ll.r{ color: var(--red); }
+.ll.c{ color: var(--cyan); }
+
+/* ── FKEY BAR ── */
+.fkey-bar{
+  background: var(--amber);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  display: flex;
+  gap: 12px;
+  letter-spacing: .04em;
+  flex-wrap: wrap;
+}
+.fkey-bar span{ opacity: .6; }
+.fkey-bar strong{ opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div>SIGENG &lt;GO&gt; &nbsp;|&nbsp; SYNTHETIC INDICES SIGNAL ENGINE &nbsp;|&nbsp; DEMO</div>
+  <div class="statusbar-right">
+    <span id="clock">--:--:--</span>
+    <span>USD</span>
+    <span id="connStatus">● LIVE SIM</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">
+    <div class="main-title">RDBULL &lt;INDEX&gt;</div>
+    <div class="sub-title">VOLATILITY 100 (1S) INDEX &nbsp;|&nbsp; SYNTHETIC &nbsp;|&nbsp; DERIV &nbsp;|&nbsp; 1-MIN CANDLES</div>
+    <div style="margin-top:6px; font-size:9px; color:var(--amber2);">
+      MODE: <span id="modeLabel" style="color:var(--amber); font-weight:700;">STEADY</span>
+      &nbsp;&nbsp;OFFSET: <span style="color:var(--amber);">-2.0</span>
+      &nbsp;&nbsp;STAKE: <span style="color:var(--amber);">$10.00</span>
+      &nbsp;&nbsp;DUR: <span style="color:var(--amber);">1 MIN</span>
+    </div>
+  </div>
+  <div class="header-price">
+    <div class="price-big" id="priceDisplay">1,042.38</div>
+    <div class="price-delta" id="priceDelta" style="color:var(--green);">▲ +1.24 &nbsp;+0.12%</div>
+    <div class="price-meta">LAST &nbsp;|&nbsp; <span id="priceTime">--:--:--</span></div>
+  </div>
+</div>
+
+<!-- STAT ROW -->
+<div class="stat-row">
+  <div class="stat-cell">
+    <div class="stat-lbl">BALANCE</div>
+    <div class="stat-val" id="sBalance" style="color:var(--green);">$298.62</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-lbl">READINESS</div>
+    <div class="stat-val" id="sReadiness" style="color:var(--amber);">67.4%</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-lbl">ENTRIES</div>
+    <div class="stat-val" id="sEntries" style="color:var(--white);">0</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-lbl">SIGNAL</div>
+    <div class="stat-val" id="sSignal" style="color:var(--amber);">WAIT</div>
+  </div>
+</div>
+
+<!-- MODE TABS -->
+<div class="mode-tabs">
+  <button class="mode-tab active" id="tabSteady" onclick="switchMode('STEADY')">F1 &nbsp;STEADY</button>
+  <button class="mode-tab" id="tabRocket" onclick="switchMode('ROCKET')">F2 &nbsp;ROCKET</button>
+</div>
+
+<!-- SIGNAL BANNER -->
+<div class="sig-banner" id="sigBanner" style="color:var(--amber);">
+  STEADY | SCANNING... | GATE=OPEN | CANDLES=3/3
+</div>
+
+<!-- CHART -->
+<canvas id="chart" height="120"></canvas>
+
+<!-- READINESS -->
+<div class="sec-hdr">ENTRY READINESS &nbsp;|&nbsp; PATTERN SCORE</div>
+<div style="padding:6px 8px; border-bottom:1px solid var(--amber3);">
+  <div class="readiness-row">
+    <div class="read-lbl">SCORE</div>
+    <div class="read-bar-track"><div class="read-bar-fill" id="readFill" style="width:67%;background:var(--amber);"></div></div>
+    <div class="read-pct" id="readPct" style="color:var(--amber);">67.4%</div>
+  </div>
+  <div style="font-size:9px; color:var(--amber3); letter-spacing:.04em; font-variant-numeric:tabular-nums;" id="readDetail">
+    macro fail: close[-1]=1039.2 &lt; close[-5]=1041.8 | score=67.4
+  </div>
+</div>
+
+<!-- BODY GRID -->
+<div class="body-grid">
+  <div class="col-left">
+    <div style="font-size:9px;color:var(--amber3);letter-spacing:.1em;margin-bottom:5px;">PATTERN FILTERS</div>
+    <table class="filter-table">
+      <tr>
+        <td class="f-lbl">MACRO GATE</td>
+        <td class="f-val" id="f1v" style="color:var(--red);">FAIL</td>
+        <td class="f-detail" id="f1d">close[-1] &lt; close[-5]</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">LOWER LOWS</td>
+        <td class="f-val" id="f2v" style="color:var(--green);">PASS</td>
+        <td class="f-detail" id="f2d">support holding</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">ATR COMPRESS</td>
+        <td class="f-val" id="f3v" style="color:var(--green);">78%</td>
+        <td class="f-detail" id="f3d">of 20-bar avg</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">CLOSE QUALITY</td>
+        <td class="f-val" id="f4v" style="color:var(--green);">PASS</td>
+        <td class="f-detail" id="f4d">top 55% of range</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">TIME GATE</td>
+        <td class="f-val" id="f5v" style="color:var(--green);">OPEN</td>
+        <td class="f-detail" id="f5d">3-min cooldown</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">LOSS GATE</td>
+        <td class="f-val" id="f6v" style="color:var(--green);">OPEN</td>
+        <td class="f-detail" id="f6d">no consec losses</td>
+      </tr>
+    </table>
+  </div>
+  <div class="col-right">
+    <div style="font-size:9px;color:var(--amber3);letter-spacing:.1em;margin-bottom:5px;">SESSION METRICS</div>
+    <table class="filter-table">
+      <tr>
+        <td class="f-lbl">WIN RATE</td>
+        <td class="f-val" id="m1v" style="color:var(--green);">--</td>
+        <td class="f-detail">session trades</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">CANDLES LOADED</td>
+        <td class="f-val" style="color:var(--amber);">200</td>
+        <td class="f-detail">1-min history</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">LOOKBACK</td>
+        <td class="f-val" style="color:var(--amber);">3</td>
+        <td class="f-detail">candles</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">ATR BASELINE</td>
+        <td class="f-val" id="m4v" style="color:var(--amber);">--</td>
+        <td class="f-detail">20-bar avg</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">EMA FAST</td>
+        <td class="f-val" id="m5v" style="color:var(--cyan);">--</td>
+        <td class="f-detail">EMA-8</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">MACD HIST</td>
+        <td class="f-val" id="m6v" style="color:var(--amber);">--</td>
+        <td class="f-detail">signal momentum</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- EVENT LOG -->
+<div class="sec-hdr">EVENT LOG &nbsp;|&nbsp; DIAGNOSTIC STREAM</div>
+<div class="log-area" id="logArea"></div>
+
+<!-- FKEY BAR -->
+<div class="fkey-bar">
+  <div><span>F1</span> <strong>STEADY</strong></div>
+  <div><span>F2</span> <strong>ROCKET</strong></div>
+  <div><span>F3</span> <strong>CONNECT</strong></div>
+  <div><span>F4</span> <strong>STOP</strong></div>
+  <div><span>F8</span> <strong>EXPORT LOG</strong></div>
+  <div><span>F10</span> <strong>SETTINGS</strong></div>
+  <div style="margin-left:auto;opacity:.5;">DEMO MODE — NO LIVE ORDERS</div>
+</div>
+
+<script>
+// ── SIMULATION ENGINE ─ no real API, no real credentials, no real strategy ──
+var mode = 'STEADY';
+var price = 1042.38;
+var prevPrice = price;
+var score = 67.4;
+var scoreTarget = 67.4;
+var tradeCount = 0;
+var wins = 0;
+var candleHistory = [];
+var liveCandle = null;
+var candleTick = 0;
+var TICKS_PER_CANDLE = 3;
+var macdHist = 0.66;
+var ema8 = price;
+var logLines = [];
+
+// Seed candle history
+(function(){
+  var p = 1035;
+  for(var i=0;i<20;i++){
+    var o=p+(Math.random()-.48)*1.8;
+    var c=o+(Math.random()-.45)*1.8;
+    var h=Math.max(o,c)+Math.random()*.7;
+    var l=Math.min(o,c)-Math.random()*.7;
+    candleHistory.push({o:o,h:h,l:l,c:c});
+    p=c;
+  }
+  price=p+(Math.random()-.48)*1;
+  ema8=price;
+})();
+
+// Clock
+function updateClock(){
+  var now=new Date();
+  var ts=now.toTimeString().substring(0,8);
+  document.getElementById('clock').textContent=ts;
+  document.getElementById('priceTime').textContent=ts;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Mode switch
+function switchMode(m){
+  mode=m;
+  document.getElementById('modeLabel').textContent=m;
+  document.getElementById('tabSteady').className='mode-tab'+(m==='STEADY'?' active':'');
+  document.getElementById('tabRocket').className='mode-tab'+(m==='ROCKET'?' active':'');
+  addLog('[MODE] Switched to '+m+' pattern engine','w');
+  scoreTarget=25+Math.random()*45;
+}
+
+// ── TICK ──
+function tick(){
+  prevPrice=price;
+  var drift=0.006;
+  price+=drift+(Math.random()-.49)*(0.3+Math.random()*0.5);
+  price=Math.max(850,Math.min(1400,price));
+
+  // EMA-8 sim
+  ema8=ema8+(2/9)*(price-ema8);
+
+  // MACD sim
+  macdHist+=((Math.random()-.48)*0.08);
+  macdHist=Math.max(-3,Math.min(3,macdHist));
+
+  // Candle builder
+  candleTick++;
+  if(!liveCandle) liveCandle={o:price,h:price,l:price,c:price};
+  else{ liveCandle.h=Math.max(liveCandle.h,price); liveCandle.l=Math.min(liveCandle.l,price); liveCandle.c=price; }
+
+  if(candleTick>=TICKS_PER_CANDLE){
+    candleHistory.push({o:liveCandle.o,h:liveCandle.h,l:liveCandle.l,c:liveCandle.c});
+    if(candleHistory.length>40) candleHistory.shift();
+    liveCandle=null; candleTick=0;
+    evaluatePattern();
+  }
+
+  updatePriceDisplay();
+  updateReadiness();
+  updateMetrics();
+  drawChart();
+}
+
+// ── PATTERN EVALUATION ──
+function evaluatePattern(){
+  var n=candleHistory.length;
+  if(n<5) return;
+
+  if(mode==='STEADY'){
+    var c1=candleHistory[n-1].c, c5=candleHistory[n-5].c;
+    var macroPass=c1>=c5;
+    var llPass=true;
+    for(var i=n-2;i<n;i++) if(candleHistory[i].l<candleHistory[i-1].l*0.9999){llPass=false;break;}
+
+    var rSum=0; for(var i=n-3;i<n;i++) rSum+=candleHistory[i].h-candleHistory[i].l;
+    var atrR=rSum/3;
+    var lSlice=candleHistory.slice(-23,-3); var lSum=0;
+    for(var i=0;i<lSlice.length;i++) lSum+=lSlice[i].h-lSlice[i].l;
+    var atrL=lSlice.length>0?lSum/lSlice.length:atrR;
+    var atrPct=atrL>0?Math.round((atrR/atrL)*100):80;
+
+    var cqPass=true;
+    for(var i=n-3;i<n;i++){
+      var rng=candleHistory[i].h-candleHistory[i].l;
+      if(rng>0.01&&(candleHistory[i].c-candleHistory[i].l)/rng<0.45){cqPass=false;break;}
+    }
+
+    var s=10; // gates
+    s+=macroPass?25:(c1>=c5-0.5?10:0);
+    s+=llPass?25:8;
+    s+=cqPass?20:5;
+    s+=atrPct<=85?20:(atrPct<=90?12:3);
+    scoreTarget=Math.min(100,s);
+
+    setF('f1v','f1d',macroPass?'PASS':'FAIL',macroPass,macroPass?'net flat/up':'close[-1]='+c1.toFixed(2)+' < close[-5]='+c5.toFixed(2));
+    setF('f2v','f2d',llPass?'PASS':'FAIL',llPass,llPass?'support holding':'lower low detected');
+    setF('f3v','f3d',atrPct+'%',atrPct<=85,'of 20-bar avg (baseline excl.)');
+    setF('f4v','f4d',cqPass?'PASS':'FAIL',cqPass,cqPass?'top 55% range':'weak close pos');
+    document.getElementById('m4v').textContent=atrL.toFixed(3);
+
+    var allPass=macroPass&&llPass&&atrPct<=85&&cqPass;
+    var reason=!macroPass?'macro fail: close[-1]='+c1.toFixed(2)+' < close[-5]='+c5.toFixed(2)
+               :!llPass?'lower low at candle 2'
+               :atrPct>85?'ATR too high ('+atrPct+'% vs threshold 85%)'
+               :'weak close (bottom 45%)';
+
+    if(allPass){
+      tradeCount++; wins++;
+      document.getElementById('sEntries').textContent=tradeCount;
+      document.getElementById('sSignal').textContent='GO';
+      document.getElementById('sSignal').style.color='var(--green)';
+      document.getElementById('sigBanner').textContent='STEADY PASS — ENTRY v4 | Price='+price.toFixed(4)+' | ATR='+atrPct+'% | gate=OPEN';
+      document.getElementById('sigBanner').style.color='var(--green)';
+      addLog('ENTRY [STEADY] Price='+price.toFixed(4)+' | ATR='+atrPct+'% | macro PASS | no lower lows | gate=OPEN','g');
+      setTimeout(function(){
+        document.getElementById('sSignal').textContent='WAIT';
+        document.getElementById('sSignal').style.color='var(--amber)';
+      },3000);
+    } else {
+      document.getElementById('sSignal').textContent='WAIT';
+      document.getElementById('sSignal').style.color='var(--amber)';
+      document.getElementById('sigBanner').textContent='STEADY | '+reason+' | candles=3/3 | gate=OPEN';
+      document.getElementById('sigBanner').style.color='var(--amber)';
+      document.getElementById('readDetail').textContent=reason+' | score='+scoreTarget.toFixed(1);
+    }
+
+  } else {
+    // ROCKET
+    var allBull=true, stair=true;
+    var bodies=[];
+    for(var i=n-3;i<n;i++){
+      if(candleHistory[i].c<=candleHistory[i].o) allBull=false;
+      if(i>n-3&&candleHistory[i].c<=candleHistory[i-1].c) stair=false;
+      bodies.push(Math.abs(candleHistory[i].c-candleHistory[i].o));
+    }
+    var engOk=bodies.length>=2&&bodies[1]>bodies[2]&&bodies[1]>bodies[0];
+    var bullCount=[candleHistory[n-1],candleHistory[n-2],candleHistory[n-3]].filter(function(c){return c.c>c.o;}).length;
+    var s=10+Math.round((bullCount/3)*25)+(stair?25:8)+(engOk?20:4)+(allBull&&stair?20:5);
+    scoreTarget=Math.min(100,s);
+
+    setF('f1v','f1d',allBull?'PASS':'FAIL',allBull,allBull?'all candles bullish':'bearish candle in seq');
+    setF('f2v','f2d',stair?'PASS':'FAIL',stair,stair?'staircase closes':'close not higher');
+    setF('f3v','f3d',engOk?'PASS':'FAIL',engOk,engOk?'2nd-to-last = engine':'engine rule fail');
+    setF('f4v','f4d',allBull&&stair&&engOk?'PASS':'FAIL',allBull&&stair&&engOk,'breakout + quality');
+
+    var reason=!allBull?'bearish candle at position '+bullCount+'/3':!stair?'staircase close failed':!engOk?'engine candle (2nd-to-last) not largest':'pattern pass';
+    document.getElementById('sigBanner').textContent='ROCKET | '+reason+' | candles=3/3 | gate=OPEN';
+    document.getElementById('sigBanner').style.color='var(--amber)';
+    document.getElementById('readDetail').textContent=reason+' | score='+scoreTarget.toFixed(1);
+    document.getElementById('sSignal').textContent='WAIT';
+    document.getElementById('sSignal').style.color='var(--amber)';
+  }
+}
+
+function setF(vId,dId,val,pass,detail){
+  var ve=document.getElementById(vId),de=document.getElementById(dId);
+  if(ve){ve.textContent=val;ve.style.color=pass?'var(--green)':'var(--red)';}
+  if(de) de.textContent=detail;
+}
+
+// ── PRICE ──
+function updatePriceDisplay(){
+  var delta=price-prevPrice, pct=prevPrice>0?(delta/prevPrice)*100:0;
+  document.getElementById('priceDisplay').textContent=price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  var dEl=document.getElementById('priceDelta');
+  dEl.textContent=(delta>=0?'▲ +':'▼ ')+Math.abs(delta).toFixed(2)+'  '+(delta>=0?'+':'')+pct.toFixed(2)+'%';
+  dEl.style.color=delta>=0?'var(--green)':'var(--red)';
+}
+
+// ── READINESS ──
+function updateReadiness(){
+  score+=(scoreTarget-score)*0.15;
+  var pct=score.toFixed(1);
+  var col=score>=90?'var(--green)':score>=60?'var(--amber)':'var(--red)';
+  document.getElementById('readFill').style.width=pct+'%';
+  document.getElementById('readFill').style.background=col;
+  document.getElementById('readPct').textContent=pct+'%';
+  document.getElementById('readPct').style.color=col;
+  document.getElementById('sReadiness').textContent=pct+'%';
+  document.getElementById('sReadiness').style.color=col;
+}
+
+// ── METRICS ──
+function updateMetrics(){
+  document.getElementById('m5v').textContent=ema8.toFixed(3);
+  document.getElementById('m6v').textContent=(macdHist>=0?'+':'')+macdHist.toFixed(4);
+  document.getElementById('m6v').style.color=macdHist>0?'var(--green)':'var(--red)';
+  document.getElementById('m1v').textContent=tradeCount>0?(Math.round(wins/tradeCount*100)+'%'):'--';
+}
+
+// ── CHART ──
+function drawChart(){
+  var canvas=document.getElementById('chart');
+  var W=canvas.offsetWidth, H=canvas.offsetHeight;
+  if(W===0||H===0) return;
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+
+  var all=candleHistory.slice(-18);
+  if(liveCandle) all=all.concat([{o:liveCandle.o,h:liveCandle.h,l:liveCandle.l,c:liveCandle.c}]);
+  if(all.length<2) return;
+
+  var hi=Math.max.apply(null,all.map(function(c){return c.h;}));
+  var lo=Math.min.apply(null,all.map(function(c){return c.l;}));
+  var rng=hi-lo||1;
+  var padT=8,padB=8;
+
+  function y(p){return padT+((hi-p)/rng)*(H-padT-padB);}
+
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid lines
+  ctx.strokeStyle='#1a0f00';
+  ctx.lineWidth=1;
+  for(var i=1;i<4;i++){
+    var gy=padT+(i/4)*(H-padT-padB);
+    ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+  }
+
+  var n=all.length;
+  var cw=Math.floor((W-2)/n);
+  var bw=Math.max(2,cw-2);
+
+  all.forEach(function(c,i){
+    var x=1+i*cw+Math.floor((cw-bw)/2);
+    var bull=c.c>=c.o;
+    var col=bull?'#00ff41':'#ff3b30';
+
+    // Wick
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x+bw/2,y(c.h));
+    ctx.lineTo(x+bw/2,y(c.l));
+    ctx.stroke();
+
+    // Body
+    var top=y(Math.max(c.o,c.c));
+    var bot=y(Math.min(c.o,c.c));
+    var bh=Math.max(1,bot-top);
+    ctx.fillStyle=bull?'#00ff41':'#ff3b30';
+    ctx.fillRect(x,top,bw,bh);
+  });
+
+  // Price line
+  ctx.strokeStyle='var(--amber)'; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(0,y(price)); ctx.lineTo(W,y(price)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Price label on chart
+  ctx.fillStyle='var(--amber)'; ctx.font='9px IBM Plex Mono,monospace';
+  ctx.fillText(price.toFixed(2),4,y(price)-3);
+}
+
+// ── LOG ──
+function addLog(msg,type){
+  var now=new Date();
+  var ts=now.toTimeString().substring(0,8);
+  logLines.push({ts:ts,msg:msg,t:type||''});
+  if(logLines.length>80) logLines.shift();
+  var box=document.getElementById('logArea');
+  var cls='ll'+(type?' '+type:'');
+  var div=document.createElement('div');
+  div.className=cls;
+  div.textContent=ts+'  '+msg;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+// ── BOOT SEQUENCE ──
+addLog('SIGENG INITIALISING...','w');
+addLog('Loaded 200 1-min candles for RDBULL. Filter history backfilled (185 entries) — ready immediately.','');
+addLog('SAR rebuilt over 200 candles — BULL(2d)','');
+addLog('MACD seeded from 200 candles. hist=0.6587','');
+addLog('Candle watchdog active — stale feed auto-resubscribe threshold: 90s','');
+addLog('ENGINE READY | STEADY v2.0 | Macro flat/up + ATR<=85% + no lower lows + top-55% closes | Lookback: 3 candles | Duration: 1.0min','g');
+addLog('Scanning...','w');
+
+setInterval(tick, 700);
+window.addEventListener('resize', drawChart);
+drawChart();
+</script>
+</body>
+</html>
